@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notas de Vídeo Local</title>
+    
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface: #1e1e1e;
+            --primary: #FF9800; /* Laranja para diferenciar do YT */
+            --text: #e0e0e0;
+            --border: #333;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 16px;
+        }
+
+        h2 { font-size: 1.5rem; margin-bottom: 20px; }
+
+        .btn-main {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: black;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        video {
+            width: 100%;
+            border-radius: 8px;
+            background: #000;
+            margin-bottom: 15px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            background: var(--surface);
+            color: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        .note-item {
+            background: var(--surface);
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .timestamp {
+            color: var(--primary);
+            font-family: monospace;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Local Video Notes</h2>
+
+    <!-- Input de arquivo invisível, acionado pelo botão -->
+    <input type="file" id="file-picker" accept="video/*" style="display:none;">
+    <button class="btn-main" onclick="document.getElementById('file-picker').click()">📂 Selecionar Vídeo</button>
+
+    <video id="video-player" controls style="display:none;"></video>
+
+    <div id="workspace" style="display:none;">
+        <button class="btn-main" id="capture-btn">⏳ Capturar Tempo e Anotar</button>
+        
+        <div id="editor" style="display:none;">
+            <textarea id="note-text" rows="3" placeholder="Sua anotação..."></textarea>
+            <button class="btn-main" id="save-btn" style="background: #4CAF50; color: white;">Salvar</button>
+        </div>
+
+        <ul id="notes-list" style="list-style: none; padding: 0;"></ul>
+        
+        <button class="btn-main" id="export-btn" style="background:#2196F3; color: white;">⬇️ Exportar (.md)</button>
+    </div>
+
+    <script>
+        const video = document.getElementById('video-player');
+        const filePicker = document.getElementById('file-picker');
+        const workspace = document.getElementById('workspace');
+        const editor = document.getElementById('editor');
+        const noteText = document.getElementById('note-text');
+        let notes = [];
+        let capturedTime = 0;
+
+        // Ao selecionar um arquivo
+        filePicker.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                video.src = URL.createObjectURL(file);
+                video.style.display = 'block';
+                workspace.style.display = 'block';
+                video.load();
+            }
+        };
+
+        // Capturar tempo
+        document.getElementById('capture-btn').onclick = () => {
+            video.pause();
+            capturedTime = video.currentTime;
+            editor.style.display = 'block';
+            noteText.focus();
+        };
+
+        // Salvar nota
+        document.getElementById('save-btn').onclick = () => {
+            if (noteText.value.trim() === "") return;
+            
+            notes.push({ time: capturedTime, text: noteText.value });
+            renderNotes();
+            
+            noteText.value = '';
+            editor.style.display = 'none';
+            video.play();
+        };
+
+        function renderNotes() {
+            const list = document.getElementById('notes-list');
+            list.innerHTML = '';
+            notes.sort((a, b) => a.time - b.time).forEach(note => {
+                const li = document.createElement('li');
+                li.className = 'note-item';
+                const min = Math.floor(note.time / 60);
+                const sec = Math.floor(note.time % 60);
+                const timeStr = `${min}:${sec < 10 ? '0' : ''}${sec}`;
+                
+                li.innerHTML = `
+                    <div class="timestamp" onclick="video.currentTime = ${note.time}; video.play();">
+                        [${timeStr}]
+                    </div>
+                    <div>${note.text}</div>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        // Exportar
+        document.getElementById('export-btn').onclick = () => {
+            let md = "# Notas de Vídeo Local\n\n";
+            notes.forEach(n => {
+                const min = Math.floor(n.time / 60);
+                const sec = Math.floor(n.time % 60);
+                md += `- **[${min}:${sec < 10 ? '0' : ''}${sec}]**: ${n.text}\n`;
+            });
+            const blob = new Blob([md], {type: 'text/markdown'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'minhas-notas.md';
+            a.click();
+        };
+    </script>
+</body>
+</html>
