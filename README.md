@@ -1,76 +1,68 @@
-# video-local-notes
-Um aplicativo para tomar ajudar a transcrever videos do armazenamento local do usuário.
----
-# Local Video Notes – Anotador de Vídeos Offline
+# Extrator de Notas de Mídia (Foco Acadêmico) 🎓
 
-**Local Video Notes** é uma ferramenta HTML puro (sem dependências externas) que permite assistir a vídeos locais e fazer anotações sincronizadas com o tempo de reprodução. Ideal para estudantes, pesquisadores e profissionais que precisam extrair informações de gravações de aulas, entrevistas, palestras ou vídeos de campo – tudo sem conexão com a internet.
+O **Extrator de Notas de Mídia** (antigo Extrator de Notas YT) é uma aplicação web de arquivo único (`.html`) focada em produtividade acadêmica e criação de resumos. Ele permite sincronizar anotações em texto com o tempo exato (timestamps) de vídeos ou áudios, além de oferecer suporte a transcrição por voz e formatação automática de referências bibliográficas.
 
----
-
-##  Funcionalidades
-
--  **Seleção de vídeo local** – carregue qualquer arquivo de vídeo do seu dispositivo.
--  **Captura de timestamp** – pause o vídeo no momento exato e anote algo.
--  **Edição rápida** – escreva a anotação em um campo de texto e salve.
--  **Lista organizada** – todas as notas são exibidas em ordem cronológica com o timestamp clicável – clique no horário para voltar àquele ponto do vídeo.
--  **Exportação para Markdown** – gere um arquivo `.md` com todas as suas anotações, pronto para ser usado em editores de texto ou para compartilhar.
--  **Design minimalista e escuro** – foca no conteúdo e reduz o cansaço visual.
+Ideal para estudantes e pesquisadores, o app foi desenhado para rodar perfeitamente em celulares de hardware modesto ou nos PCs da biblioteca, sem necessidade de banco de dados, instalação ou dependências complexas (tudo roda no lado do cliente).
 
 ---
 
-##  Como usar
+## 🚀 Novas Funcionalidades (Versão 2.0)
 
-1. **Abra o arquivo** `index.html` em qualquer navegador moderno (Chrome, Edge, Firefox, etc.).  
-   *Nenhuma instalação ou servidor é necessário.*
-
-2. **Clique no botão** `📂 Selecionar Vídeo` e escolha um arquivo de vídeo do seu computador.
-
-3. O vídeo será carregado e os controles aparecerão. Assista normalmente.
-
-4. Quando quiser fazer uma anotação:
-   - Pause o vídeo (ou clique no botão **⏳ Capturar Tempo e Anotar** – ele pausa automaticamente).
-   - Escreva sua nota no campo que aparecer.
-   - Clique em **Salvar** – a nota será registrada com o timestamp atual.
-
-5. Para voltar a um ponto específico, clique no timestamp (ex: `[3:45]`) na lista de notas.
-
-6. Para exportar todas as anotações, clique em **⬇️ Exportar (.md)** – um arquivo `minhas-notas.md` será baixado.
+*   **💾 Salvamento Automático (Anti-Desastre):** Tudo o que você digita é salvo instantaneamente no armazenamento do navegador (`localStorage`). Se o celular fechar o app, a bateria acabar ou você atualizar a página acidentalmente, seu trabalho pode ser restaurado com um clique!
+*   **📚 Metadados Acadêmicos e Citações:** Preencha os campos de Autor, Título e Ano. Ao exportar seu trabalho, o aplicativo gera automaticamente as referências no formato **ABNT** e **APA** no cabeçalho do documento.
+*   **📺 Modo Manual (TV/Netflix):** Está assistindo a um documentário na TV? Use o "Modo Manual" para usar o celular apenas como um bloco de notas inteligente, digitando o tempo em que as coisas acontecem.
+*   **📋 Copiar Fácil:** Botões dedicados para copiar trechos individuais rapidamente ou um botão "Copiar Tudo" para colar direto no Word, Notion ou WhatsApp.
+*   **🎙️ Transcrição por Voz (Ditado Integrado):** 
+    *   **Online (Web Speech):** Rápido, leve e usa o microfone do celular para ditar notas.
+    *   **Offline (Vosk):** Para áudios/vídeos carregados do dispositivo, o app extrai e transcreve o áudio diretamente do arquivo, sem usar o microfone (zero ecos, 100% offline).
+*   **🙌 Modo Mãos Livres:** Transcreva continuamente. Uma pausa de 3 segundos na voz salva a nota atual e inicia a próxima no tempo correto.
+*   **📌 Layout Otimizado (Sticky):** Em celulares, a área de vídeo e digitação fica fixa no topo da tela, permitindo que você role e leia as notas antigas sem perder os controles de vista.
+*   **🔄 Novo Trabalho:** Um botão seguro para limpar a área e começar uma nova sessão de estudos rapidamente.
 
 ---
 
-##  Tecnologias utilizadas
+## 🎥 Fontes de Mídia Suportadas
 
-- **HTML5** – estrutura da página.
-- **CSS3** – estilização (tema escuro, responsivo).
-- **JavaScript (Vanilla)** – toda a lógica de captura, armazenamento e exportação.
-- **File API** – leitura de vídeos locais.
-- **Blob/URL.createObjectURL** – carregamento dinâmico do vídeo.
-- **Markdown** – formato de exportação (leve e universal).
-
-Nenhuma biblioteca externa, framework ou CDN – tudo roda offline.
+1.  **YouTube e Vimeo:** Cole o link e o app carrega o player oficial com captura de tempo automática.
+2.  **Arquivos Locais:** Carregue arquivos de vídeo (`.mp4`, `.webm`) ou áudio (`.mp3`, `.wav`) direto do seu dispositivo. Excelente para gravar aulas ou usar no modo Avião.
+3.  **Outros Links / Redes Sociais:** Links que não possuem player aberto (como Instagram, Facebook Reels, Netflix) podem ser anotados usando o **Modo Manual**.
 
 ---
 
-##  Estrutura do projeto
+## 💻 Como Usar
 
-O projeto consiste em um único arquivo `index.html` que contém todo o CSS e JavaScript embutidos.  
-Ideal para portabilidade: basta copiar o arquivo para qualquer dispositivo (computador, tablet, celular) e abrir.
+1.  **Carregue a Mídia:** Cole um link, faça upload de um arquivo ou clique em "Iniciar Sem Mídia" (Modo Manual).
+2.  **Preencha os Metadados (Opcional):** Adicione Autor, Título e Ano para gerar referências.
+3.  **Anotando:** 
+    *   Clique em **⏳ Anotar** para capturar o tempo exato (ou digite o tempo no modo manual).
+    *   Digite sua nota ou use o botão de **Microfone 🎙️** para ditar.
+    *   Clique em **Salvar Nota**.
+4.  **Exportação:**
+    *   **⬇️ (.md):** Baixa um arquivo Markdown perfeito para Obsidian, Notion ou edição simples.
+    *   **⬇️ (.json):** Baixa um backup completo da sessão. Pode ser importado de volta no app para continuar o trabalho depois.
+    *   **📋 Copiar Tudo:** Envia tudo formatado para a sua Área de Transferência.
 
 ---
 
-##  Possíveis melhorias futuras
+## ⌨️ Atalhos de Teclado (Para PC)
 
-- [ ] Editar/excluir notas individuais.
-- [ ] Importar/exportar notas em JSON para sincronização entre dispositivos.
-- [ ] Atalhos de teclado (ex: `Espaço` para pausar/capturar).
-- [ ] Suporte a legendas ou transcrição automática (usando Web Speech API).
-- [ ] Opção de tema claro/escuro.
+*   `Espaço`: Pausa/Retoma a mídia e já abre a caixa de anotação (quando não estiver digitando).
+*   `Enter`: Salva a nota atual (quando estiver com foco na caixa de texto).
+*   `Esc`: Cancela a edição e retoma o vídeo.
+
+---
+
+## 🛠️ Detalhes Técnicos
+
+*   **Arquitetura:** `Vanilla JavaScript` (ES6+), HTML5 e CSS3.
+*   **Estilo:** Design Responsivo (Mobile First) com tema Claro/Escuro automático e manual.
+*   **Sem Servidor:** Todo o processamento (incluindo IA do Vosk e salvamento no LocalStorage) acontece 100% no navegador do usuário. Segurança e privacidade totais.
 
 ---
 
 ##  Contribuição
 
-Este projeto foi desenvolvido com auxílio de IA para atender a uma necessidade pessoal. Sinta-se à vontade para fazer um **fork**, adaptar e melhorar!  
+*Projeto idealizado com auxílio de IA para facilitação de rotinas acadêmicas, resumos de aulas e transcrição de pesquisas.* Sinta-se à vontade para fazer um **fork**, adaptar e melhorar!  
 Se tiver sugestões ou encontrar bugs, abra uma *issue* ou envie um *pull request*.
 
 ---
@@ -82,4 +74,4 @@ Este projeto está sob a licença **MIT** – consulte o arquivo [LICENSE](LICEN
 ---
 
 **Desenvolvido por** Evandro Maia Neves – estudante de Engenharia Florestal na UEPA, Campus Castanhal.  
-*Feito com ❤️ para facilitar os estudos e o trabalho de campo.*
+*Feito com 🔎 para facilitar os estudos e o trabalho de campo.*
