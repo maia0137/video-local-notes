@@ -1,17 +1,44 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notas de Vídeo Local</title>
+    <title>Extrator de Notas YT v2</title>
     
+    <!-- =========================================================
+         MÓDULO 1: ESTILOS (CSS)
+         ========================================================= -->
     <style>
-        :root {
+        :root[data-theme="dark"] {
             --bg-color: #121212;
             --surface: #1e1e1e;
-            --primary: #FF9800; /* Laranja para diferenciar do YT */
+            --primary: #4CAF50;
+            --primary-hover: #45a049;
+            --danger: #f44336;
+            --danger-hover: #d32f2f;
             --text: #e0e0e0;
+            --text-muted: #888;
             --border: #333;
+            --warning-bg: #4a3e00;
+            --warning-text: #ffd54f;
+            --copy-btn-bg: #9c27b0;
+            --copy-btn-hover: #7b1fa2;
+        }
+
+        :root[data-theme="light"] {
+            --bg-color: #f5f5f5;
+            --surface: #ffffff;
+            --primary: #2e7d32;
+            --primary-hover: #1b5e20;
+            --danger: #d32f2f;
+            --danger-hover: #b71c1c;
+            --text: #121212;
+            --text-muted: #666;
+            --border: #ccc;
+            --warning-bg: #fff3e0;
+            --warning-text: #e65100;
+            --copy-btn-bg: #ab47bc;
+            --copy-btn-hover: #8e24aa;
         }
 
         body {
@@ -20,45 +47,155 @@
             color: var(--text);
             margin: 0;
             padding: 16px;
+            line-height: 1.5;
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        h2 { font-size: 1.5rem; margin-bottom: 20px; }
-
-        .btn-main {
-            width: 100%;
-            padding: 14px;
-            background: var(--primary);
-            color: black;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            margin-bottom: 15px;
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
         }
 
-        video {
-            width: 100%;
-            border-radius: 8px;
-            background: #000;
-            margin-bottom: 15px;
-        }
+        h2 { margin: 0; font-size: 1.5rem; }
 
-        textarea {
-            width: 100%;
-            padding: 12px;
-            background: var(--surface);
-            color: white;
-            border: 1px solid var(--border);
-            border-radius: 8px;
+        input, select, button, textarea {
             box-sizing: border-box;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s, background 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button:hover { background: var(--primary-hover); }
+        button:active { transform: scale(0.98); opacity: 0.9; }
+        
+        .btn-small { padding: 6px 12px; font-size: 0.85rem; width: auto; margin-bottom: 0;}
+        .btn-danger { background: var(--danger); }
+        .btn-danger:hover { background: var(--danger-hover); }
+        .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: var(--border); }
+        .btn-copy { background: var(--copy-btn-bg); color: white; border: none; }
+        .btn-copy:hover { background: var(--copy-btn-hover); }
+
+        .file-upload-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        .file-upload-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        @media (min-width: 900px) {
+            .app-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                align-items: start;
+            }
+            #video-column, #workspace-column {
+                position: sticky;
+                top: 16px;
+                max-height: calc(100vh - 100px);
+                overflow-y: auto;
+                padding-right: 8px;
+            }
+        }
+
+        #video-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            display: none;
+        }
+        #video-container.ratio-16-9 { padding-bottom: 56.25%; }
+        #video-container.ratio-9-16 { padding-bottom: 177.7%; max-width: 400px; margin: 0 auto; }
+        
+        #video-container iframe, #video-container video, #video-container audio {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+        }
+        #video-container audio { height: 50px; top: calc(50% - 25px); }
+
+        .manual-warning {
+            background: var(--warning-bg);
+            color: var(--warning-text);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            display: none;
+        }
+
+        /* Layout Sticky para os controles de nota */
+        .workspace-sticky-header {
+            position: sticky;
+            top: -1px; 
+            background: var(--bg-color);
+            z-index: 10;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
+            box-shadow: 0 4px 6px -6px rgba(0,0,0,0.5);
+        }
+
+        #notes-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
         }
 
         .note-item {
             background: var(--surface);
             padding: 12px;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             border-radius: 8px;
             border-left: 4px solid var(--primary);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .timestamp {
@@ -68,105 +205,854 @@
             cursor: pointer;
             text-decoration: underline;
         }
+
+        .note-actions { display: flex; gap: 8px; }
+        .note-text { white-space: pre-wrap; word-break: break-word; }
+
+        /* Estilos do Microfone Integrado (Input with Mic) */
+        .input-with-mic {
+            position: relative;
+            display: flex;
+            margin-bottom: 12px;
+        }
+        .input-with-mic textarea {
+            width: 100%;
+            margin-bottom: 0;
+            padding-right: 50px; 
+        }
+        #mic-btn-inner {
+            position: absolute;
+            right: 8px;
+            bottom: 8px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            z-index: 2;
+        }
+        
+        .mic-active {
+            background: var(--danger) !important;
+            color: white !important;
+            border-color: var(--danger) !important;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(244, 67, 54, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(244, 67, 54, 0); }
+        }
+
+        .transcription-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+        }
+
+        .keyboard-shortcuts {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        kbd {
+            background: var(--border);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .flex-row { display: flex; gap: 8px; align-items: stretch;}
+        .hidden { display: none !important; }
     </style>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="https://player.vimeo.com/api/player.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vosk-browser@0.3.1/dist/vosk.js"></script>
 </head>
 <body>
 
-    <h2>Local Video Notes</h2>
-
-    <!-- Input de arquivo invisível, acionado pelo botão -->
-    <input type="file" id="file-picker" accept="video/*" style="display:none;">
-    <button class="btn-main" onclick="document.getElementById('file-picker').click()">📂 Selecionar Vídeo</button>
-
-    <video id="video-player" controls style="display:none;"></video>
-
-    <div id="workspace" style="display:none;">
-        <button class="btn-main" id="capture-btn">⏳ Capturar Tempo e Anotar</button>
+    <!-- =========================================================
+         MÓDULO 2: ESTRUTURA (HTML)
+         ========================================================= -->
+    <header>
+        <h2>Extrator de Notas v2</h2>
+        <div style="display: flex; gap: 8px;">
+            <!-- Novo Botão de Reset/Novo Trabalho -->
+            <button id="reset-app-btn" class="btn-danger btn-small hidden">🔄 Novo Trabalho</button>
+            <button id="theme-toggle" class="btn-secondary btn-small">🌙 Tema</button>
+        </div>
+    </header>
+    
+    <div class="app-container">
         
-        <div id="editor" style="display:none;">
-            <textarea id="note-text" rows="3" placeholder="Sua anotação..."></textarea>
-            <button class="btn-main" id="save-btn" style="background: #4CAF50; color: white;">Salvar</button>
+        <!-- COLUNA ESQUERDA: SETUP E PLAYER -->
+        <div id="video-column">
+            
+            <div id="setup-section">
+                <!-- Restauração Automática (Aparece se houver sessão salva) -->
+                <button id="restore-session-btn" class="hidden" style="background: var(--primary); margin-bottom: 20px; border: 2px solid #fff;">⏳ Continuar Sessão Salva Anteriormente</button>
+
+                <h3>1. Escolha a Mídia</h3>
+                <input type="text" id="media-url" placeholder="Cole link (YouTube, Vimeo, MP4, Insta, Twitter...)">
+                <div style="text-align: center; margin-bottom: 12px; color: var(--text-muted);">OU</div>
+                
+                <div class="file-upload-wrapper">
+                    <button class="btn-secondary">📁 Carregar Arquivo Local (Vídeo/Áudio)</button>
+                    <input type="file" id="local-file" accept="video/*,audio/*">
+                </div>
+
+                <select id="video-format">
+                    <option value="horizontal">Aspect Ratio: Padrão (Horizontal 16:9)</option>
+                    <option value="vertical">Aspect Ratio: Vertical (Shorts/Reels 9:16)</option>
+                </select>
+
+                <button id="load-btn">Carregar Mídia</button>
+                
+                <!-- Novo Botão de Modo Manual Explícito -->
+                <button id="manual-mode-btn" class="btn-secondary" style="margin-top: 8px; border-style: dashed;">📺 Iniciar Sem Mídia (TV / Netflix / Outro)</button>
+
+                <!-- Nova Seção: Metadados Acadêmicos -->
+                <details style="margin-top: 16px; margin-bottom: 16px; background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                    <summary style="cursor: pointer; font-weight: bold; margin-bottom: 8px;">🎓 Metadados Acadêmicos (ABNT/APA)</summary>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0;">Preencha para incluir referências automáticas na exportação.</p>
+                    <input type="text" id="meta-author" placeholder="Autor ou Canal (ex: SILVA, João / Nerdologia)" style="margin-bottom: 8px;">
+                    <input type="text" id="meta-title" placeholder="Título da Obra / Vídeo" style="margin-bottom: 8px;">
+                    <input type="text" id="meta-year" placeholder="Ano de Publicação (ex: 2026)" style="margin-bottom: 0;">
+                </details>
+
+                <hr style="border-color: var(--border); margin: 20px 0;">
+                
+                <h3>Recuperar Arquivo Exportado</h3>
+                <div class="file-upload-wrapper">
+                    <button class="btn-secondary" style="background:#2196F3; color: white;">📂 Importar JSON de Notas</button>
+                    <input type="file" id="import-json" accept=".json">
+                </div>
+            </div>
+
+            <!-- Aviso Modo Manual -->
+            <div id="manual-warning" class="manual-warning">
+                ⚠️ <strong>Modo Manual Ativado:</strong> Assistindo externamente. Digite o tempo da mídia no campo à direita ao anotar.
+            </div>
+
+            <!-- Player Dinâmico -->
+            <div id="video-container" class="ratio-16-9">
+                <div id="player-wrapper"></div>
+            </div>
         </div>
 
-        <ul id="notes-list" style="list-style: none; padding: 0;"></ul>
-        
-        <button class="btn-main" id="export-btn" style="background:#2196F3; color: white;">⬇️ Exportar (.md)</button>
+        <!-- COLUNA DIREITA: ÁREA DE TRABALHO -->
+        <div id="workspace-column" class="hidden">
+            
+            <div class="workspace-sticky-header">
+                
+                <div class="flex-row" style="margin-bottom: 8px;">
+                    <button id="capture-time-btn" style="flex: 1; height: 50px; font-size: 1.1rem; margin-bottom: 0;">⏳ Anotar</button>
+                    <button id="quick-mic-btn" class="hidden" style="width: 50px; height: 50px; margin-bottom: 0; background: var(--danger); font-size: 1.2rem;" title="Capturar e Ditar (Mãos Livres)">🎙️</button>
+                    <button id="settings-toggle-btn" class="btn-secondary" style="width: 50px; height: 50px; margin-bottom: 0;" title="Configurações de Transcrição">⚙️</button>
+                </div>
+                
+                <div class="keyboard-shortcuts">
+                    Atalhos: <kbd>Espaço</kbd> Pausar/Anotar | <kbd>Enter</kbd> Salvar
+                </div>
+
+                <input type="text" id="manual-time-input" placeholder="Tempo (ex: 01:25)" class="hidden" style="margin-bottom: 8px;">
+
+                <div id="settings-panel" class="transcription-panel hidden">
+                    <div style="margin-bottom: 8px;"><strong>🎙️ Motor de Transcrição</strong></div>
+                    <select id="transcription-engine" style="margin-bottom: 8px;">
+                        <option value="none">Desativado</option>
+                        <option value="webspeech">Online (Web Speech API - Usa Microfone)</option>
+                        <option value="vosk">Offline (Vosk - Direto do Vídeo/Áudio Local)</option>
+                    </select>
+                    
+                    <div id="vosk-config" class="hidden">
+                        <input type="text" id="vosk-model-url" placeholder="URL do Modelo Vosk" value="https://models.alphacep.com/vosk-model-small-pt-0.3.zip" style="font-size:0.8rem; padding:8px; margin-bottom:4px;">
+                    </div>
+
+                    <label style="display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 0.9rem; cursor: pointer;">
+                        <input type="checkbox" id="auto-save-toggle" style="width: auto; margin: 0; cursor: pointer;">
+                        <strong>Ditado Mãos Livres:</strong> Salvar nota automaticamente após 3s de silêncio
+                    </label>
+                </div>
+
+                <div id="note-editor-container" class="hidden">
+                    <div class="input-with-mic">
+                        <textarea id="note-input" rows="3" placeholder="Digite sua anotação aqui..."></textarea>
+                        <button id="mic-btn-inner" class="hidden" title="Iniciar/Parar Ditado">🎙️</button>
+                    </div>
+                    <div class="flex-row">
+                        <button id="save-note-btn">Salvar Nota</button>
+                        <button id="cancel-note-btn" class="btn-secondary">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exportação -->
+            <div class="flex-row" style="margin-bottom: 16px; flex-wrap: wrap;">
+                <button id="export-md-btn" style="background:#2196F3; flex: 1;">⬇️ (.md)</button>
+                <button id="export-json-btn" style="background:#ff9800; flex: 1;">⬇️ (.json)</button>
+                <button id="copy-all-btn" class="btn-copy" style="flex: 1;" title="Copiar todas as notas">📋 Copiar Tudo</button>
+            </div>
+
+            <ul id="notes-list"></ul>
+        </div>
     </div>
 
+    <!-- =========================================================
+         MÓDULO 3: LÓGICA (JavaScript)
+         ========================================================= -->
     <script>
-        const video = document.getElementById('video-player');
-        const filePicker = document.getElementById('file-picker');
-        const workspace = document.getElementById('workspace');
-        const editor = document.getElementById('editor');
-        const noteText = document.getElementById('note-text');
         let notes = [];
-        let capturedTime = 0;
+        let currentMediaManager = null;
+        let editingNoteId = null;
+        let mediaUrlMetadata = "";
+        let isTranscribing = false;
+        let autoSaveTimer = null;
 
-        // Ao selecionar um arquivo
-        filePicker.onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                video.src = URL.createObjectURL(file);
-                video.style.display = 'block';
-                workspace.style.display = 'block';
-                video.load();
+        const DOM = {
+            setup: document.getElementById('setup-section'),
+            workspace: document.getElementById('workspace-column'),
+            videoContainer: document.getElementById('video-container'),
+            playerWrapper: document.getElementById('player-wrapper'),
+            manualWarning: document.getElementById('manual-warning'),
+            manualTimeInput: document.getElementById('manual-time-input'),
+            noteEditor: document.getElementById('note-editor-container'),
+            noteInput: document.getElementById('note-input'),
+            notesList: document.getElementById('notes-list'),
+            themeToggle: document.getElementById('theme-toggle'),
+            captureBtn: document.getElementById('capture-time-btn'),
+            quickMicBtn: document.getElementById('quick-mic-btn'),
+            innerMicBtn: document.getElementById('mic-btn-inner'),
+            settingsToggle: document.getElementById('settings-toggle-btn'),
+            settingsPanel: document.getElementById('settings-panel'),
+            engineSelect: document.getElementById('transcription-engine'),
+            voskConfig: document.getElementById('vosk-config'),
+            autoSaveToggle: document.getElementById('auto-save-toggle'),
+            resetBtn: document.getElementById('reset-app-btn')
+        };
+
+        // --- SISTEMA DE SALVAMENTO AUTOMÁTICO (LOCALSTORAGE) ---
+        function saveToLocalStorage() {
+            const data = {
+                notes: notes,
+                source: mediaUrlMetadata,
+                author: document.getElementById('meta-author').value,
+                title: document.getElementById('meta-title').value,
+                year: document.getElementById('meta-year').value,
+                textDraft: DOM.noteInput.value
+            };
+            localStorage.setItem('yt_notes_session', JSON.stringify(data));
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('yt_notes_session');
+            if (saved) {
+                const data = JSON.parse(saved);
+                if (data.notes && data.notes.length > 0) {
+                    const btnRestore = document.getElementById('restore-session-btn');
+                    btnRestore.classList.remove('hidden');
+                    
+                    btnRestore.onclick = () => {
+                        notes = data.notes;
+                        mediaUrlMetadata = data.source || "Sessão Restaurada";
+                        document.getElementById('meta-author').value = data.author || '';
+                        document.getElementById('meta-title').value = data.title || '';
+                        document.getElementById('meta-year').value = data.year || '';
+                        DOM.noteInput.value = data.textDraft || '';
+                        
+                        DOM.setup.classList.add('hidden');
+                        DOM.workspace.classList.remove('hidden');
+                        DOM.resetBtn.classList.remove('hidden');
+                        
+                        // Tenta reconectar a mídia
+                        const type = Utils.detectMediaType(mediaUrlMetadata);
+                        if (type === 'youtube') {
+                            DOM.videoContainer.style.display = 'block';
+                            currentMediaManager = new YouTubeHandler(mediaUrlMetadata, DOM.playerWrapper);
+                            currentMediaManager.init();
+                        } else if (type === 'vimeo') {
+                            DOM.videoContainer.style.display = 'block';
+                            currentMediaManager = new VimeoHandler(mediaUrlMetadata, DOM.playerWrapper);
+                            currentMediaManager.init();
+                        } else {
+                            // Prevenção: cai no modo manual
+                            currentMediaManager = new ManualHandler();
+                            DOM.videoContainer.style.display = 'none';
+                            DOM.manualWarning.style.display = 'block';
+                            DOM.manualTimeInput.classList.remove('hidden');
+                        }
+                        renderNotes();
+                    };
+                }
+            }
+        }
+
+        // Listener de Auto-save para os campos de texto
+        ['meta-author', 'meta-title', 'meta-year'].forEach(id => {
+            document.getElementById(id).addEventListener('input', saveToLocalStorage);
+        });
+        DOM.noteInput.addEventListener('input', saveToLocalStorage);
+
+        // --- TEMA ---
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            let currentTheme = savedTheme ? savedTheme : (prefersDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            DOM.themeToggle.textContent = currentTheme === 'dark' ? '☀️ Claro' : '🌙 Escuro';
+
+            DOM.themeToggle.addEventListener('click', () => {
+                currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', currentTheme);
+                localStorage.setItem('theme', currentTheme);
+                DOM.themeToggle.textContent = currentTheme === 'dark' ? '☀️ Claro' : '🌙 Escuro';
+            });
+        }
+        initTheme();
+
+        // --- UTILITÁRIOS ---
+        const Utils = {
+            formatTime: (seconds) => {
+                const h = Math.floor(seconds / 3600);
+                const m = Math.floor((seconds % 3600) / 60);
+                const s = Math.floor(seconds % 60);
+                if (h > 0) return `${h}:${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+                return `${m}:${s < 10 ? '0' : ''}${s}`;
+            },
+            parseTime: (timeStr) => {
+                const parts = timeStr.split(':').reverse();
+                let secs = 0;
+                if (parts[0]) secs += parseInt(parts[0], 10);
+                if (parts[1]) secs += parseInt(parts[1], 10) * 60;
+                if (parts[2]) secs += parseInt(parts[2], 10) * 3600;
+                return isNaN(secs) ? 0 : secs;
+            },
+            generateId: () => Date.now().toString(36) + Math.random().toString(36).substr(2),
+            detectMediaType: (url) => {
+                if (/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/.test(url)) return 'youtube';
+                if (/vimeo\.com\/(?:.*#|.*\/)?([\d]+)/.test(url)) return 'vimeo';
+                if (/\.(mp4|webm|ogg)$/i.test(url)) return 'video_direct';
+                if (/\.(mp3|wav|m4a|aac)$/i.test(url)) return 'audio_direct';
+                return 'manual'; 
             }
         };
 
-        // Capturar tempo
-        document.getElementById('capture-btn').onclick = () => {
-            video.pause();
-            capturedTime = video.currentTime;
-            editor.style.display = 'block';
-            noteText.focus();
-        };
+        // --- GERENCIADORES DE MÍDIA ---
+        class YouTubeHandler {
+            constructor(url, container) {
+                this.container = container;
+                this.videoId = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)[1];
+                this.player = null;
+                this.playing = false;
+            }
+            async init() {
+                this.container.innerHTML = '<div id="yt-iframe"></div>';
+                return new Promise((resolve) => {
+                    this.player = new YT.Player('yt-iframe', {
+                        height: '100%', width: '100%', videoId: this.videoId,
+                        events: {
+                            'onReady': () => resolve(),
+                            'onStateChange': (e) => { this.playing = e.data === YT.PlayerState.PLAYING; }
+                        }
+                    });
+                });
+            }
+            play() { this.player.playVideo(); }
+            pause() { this.player.pauseVideo(); }
+            getCurrentTime() { return this.player.getCurrentTime() || 0; }
+            seek(time) { this.player.seekTo(time); }
+            isPlaying() { return this.playing; }
+        }
 
-        // Salvar nota
-        document.getElementById('save-btn').onclick = () => {
-            if (noteText.value.trim() === "") return;
+        class VimeoHandler {
+            constructor(url, container) {
+                this.container = container;
+                this.videoId = url.match(/vimeo\.com\/(?:.*#|.*\/)?([\d]+)/)[1];
+                this.player = null;
+                this.playing = false;
+            }
+            async init() {
+                this.container.innerHTML = `<iframe id="vimeo-iframe" src="https://player.vimeo.com/video/${this.videoId}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen"></iframe>`;
+                this.player = new Vimeo.Player(document.getElementById('vimeo-iframe'));
+                this.player.on('play', () => this.playing = true);
+                this.player.on('pause', () => this.playing = false);
+                return this.player.ready();
+            }
+            play() { this.player.play(); }
+            pause() { this.player.pause(); }
+            async getCurrentTime() { return await this.player.getCurrentTime(); }
+            seek(time) { this.player.setCurrentTime(time); }
+            isPlaying() { return this.playing; }
+        }
+
+        class HTML5MediaHandler {
+            constructor(urlOrFile, container, isAudio = false) {
+                this.container = container;
+                this.source = typeof urlOrFile === 'string' ? urlOrFile : URL.createObjectURL(urlOrFile);
+                this.element = null;
+                this.isAudio = isAudio;
+            }
+            async init() {
+                const tag = this.isAudio ? 'audio' : 'video';
+                this.container.innerHTML = `<${tag} controls id="html5-media" src="${this.source}"></${tag}>`;
+                this.element = document.getElementById('html5-media');
+                return Promise.resolve();
+            }
+            play() { this.element.play(); }
+            pause() { this.element.pause(); }
+            getCurrentTime() { return this.element.currentTime; }
+            seek(time) { this.element.currentTime = time; }
+            isPlaying() { return !this.element.paused; }
+            getMediaElement() { return this.element; }
+        }
+
+        class ManualHandler {
+            constructor() { this.container = null; }
+            async init() { return Promise.resolve(); }
+            play() {} pause() {}
+            getCurrentTime() { return Utils.parseTime(DOM.manualTimeInput.value || "0:00"); }
+            seek(time) { DOM.manualTimeInput.value = Utils.formatTime(time); }
+            isPlaying() { return false; }
+        }
+
+        async function getMediaTimeSafe() {
+            if (!currentMediaManager) return 0;
+            let time = currentMediaManager.getCurrentTime();
+            if (time instanceof Promise) time = await time;
+            return time;
+        }
+
+        // --- INICIALIZAÇÃO E SETUP ---
+        document.getElementById('load-btn').addEventListener('click', async () => {
+            const urlInput = document.getElementById('media-url').value;
+            const fileInput = document.getElementById('local-file').files[0];
+            const format = document.getElementById('video-format').value;
+
+            if (!urlInput && !fileInput) return alert("Insira um link ou selecione um arquivo.");
+
+            DOM.setup.classList.add('hidden');
+            DOM.workspace.classList.remove('hidden');
+            DOM.resetBtn.classList.remove('hidden');
+            DOM.videoContainer.style.display = 'block';
+            DOM.videoContainer.className = format === 'vertical' ? 'ratio-9-16' : 'ratio-16-9';
+
+            if (fileInput) {
+                mediaUrlMetadata = fileInput.name;
+                currentMediaManager = new HTML5MediaHandler(fileInput, DOM.playerWrapper, fileInput.type.startsWith('audio'));
+            } else {
+                mediaUrlMetadata = urlInput;
+                const type = Utils.detectMediaType(urlInput);
+                if (type === 'youtube') currentMediaManager = new YouTubeHandler(urlInput, DOM.playerWrapper);
+                else if (type === 'vimeo') currentMediaManager = new VimeoHandler(urlInput, DOM.playerWrapper);
+                else if (type === 'video_direct') currentMediaManager = new HTML5MediaHandler(urlInput, DOM.playerWrapper, false);
+                else if (type === 'audio_direct') currentMediaManager = new HTML5MediaHandler(urlInput, DOM.playerWrapper, true);
+                else {
+                    currentMediaManager = new ManualHandler();
+                    DOM.videoContainer.style.display = 'none';
+                    DOM.manualWarning.style.display = 'block';
+                    DOM.manualTimeInput.classList.remove('hidden');
+                }
+            }
+
+            await currentMediaManager.init();
+            if (currentMediaManager instanceof HTML5MediaHandler) {
+                document.querySelector('#transcription-engine option[value="vosk"]').disabled = false;
+            } else {
+                document.querySelector('#transcription-engine option[value="vosk"]').disabled = true;
+            }
+            saveToLocalStorage();
+        });
+
+        // Modo Manual Direto
+        document.getElementById('manual-mode-btn').addEventListener('click', () => {
+            mediaUrlMetadata = "Modo Manual (Outro Aparelho)";
+            currentMediaManager = new ManualHandler();
             
-            notes.push({ time: capturedTime, text: noteText.value });
+            DOM.setup.classList.add('hidden');
+            DOM.workspace.classList.remove('hidden');
+            DOM.resetBtn.classList.remove('hidden');
+            
+            DOM.videoContainer.style.display = 'none';
+            DOM.manualWarning.style.display = 'block';
+            DOM.manualTimeInput.classList.remove('hidden');
+            document.querySelector('#transcription-engine option[value="vosk"]').disabled = true;
+            saveToLocalStorage();
+        });
+
+        // Novo Trabalho (Reset)
+        DOM.resetBtn.addEventListener('click', () => {
+            if(confirm('Atenção: Isso apagará todas as notas da sessão atual. Deseja iniciar um novo trabalho?')) {
+                notes = [];
+                localStorage.removeItem('yt_notes_session');
+                DOM.notesList.innerHTML = '';
+                
+                DOM.workspace.classList.add('hidden');
+                DOM.setup.classList.remove('hidden');
+                DOM.resetBtn.classList.add('hidden');
+                DOM.videoContainer.style.display = 'none';
+                DOM.manualWarning.style.display = 'none';
+                DOM.manualTimeInput.classList.add('hidden');
+                
+                document.getElementById('media-url').value = '';
+                document.getElementById('local-file').value = '';
+                document.getElementById('meta-author').value = '';
+                document.getElementById('meta-title').value = '';
+                document.getElementById('meta-year').value = '';
+                DOM.noteInput.value = '';
+                
+                DOM.playerWrapper.innerHTML = ''; 
+                currentMediaManager = null;
+                
+                // Força reload seguro para limpar estado de Audio Web API
+                location.reload(); 
+            }
+        });
+
+        // --- GESTÃO DE NOTAS ---
+        DOM.captureBtn.addEventListener('click', async () => {
+            if (!currentMediaManager) return;
+            if (currentMediaManager.isPlaying()) currentMediaManager.pause();
+            const time = await getMediaTimeSafe();
+            openNoteEditor(time);
+        });
+
+        function openNoteEditor(time, existingNoteId = null) {
+            editingNoteId = existingNoteId;
+            DOM.noteEditor.classList.remove('hidden');
+            
+            if (existingNoteId) {
+                const note = notes.find(n => n.id === existingNoteId);
+                DOM.noteInput.value = note.text;
+                DOM.captureBtn.textContent = `⏳ Editando [${Utils.formatTime(note.time)}]`;
+            } else {
+                DOM.noteInput.value = '';
+                DOM.noteInput.dataset.time = time;
+                DOM.captureBtn.textContent = `⏳ Nova em [${Utils.formatTime(time)}]`;
+            }
+            DOM.noteInput.focus();
+        }
+
+        function closeNoteEditor() {
+            DOM.noteEditor.classList.add('hidden');
+            DOM.noteInput.value = '';
+            editingNoteId = null;
+            DOM.captureBtn.textContent = "⏳ Anotar";
+            if(isTranscribing) stopTranscription(DOM.engineSelect.value);
+            if (currentMediaManager && !currentMediaManager.isPlaying()) currentMediaManager.play();
+            saveToLocalStorage(); // Salva estado vazio do input
+        }
+
+        document.getElementById('save-note-btn').addEventListener('click', saveNote);
+        document.getElementById('cancel-note-btn').addEventListener('click', closeNoteEditor);
+
+        function saveNote() {
+            const text = DOM.noteInput.value.trim();
+            if (text === '') { closeNoteEditor(); return; }
+
+            if (editingNoteId) {
+                const note = notes.find(n => n.id === editingNoteId);
+                if (note) note.text = text;
+            } else {
+                const time = parseFloat(DOM.noteInput.dataset.time);
+                notes.push({ id: Utils.generateId(), time: time, text: text });
+            }
+            
             renderNotes();
-            
-            noteText.value = '';
-            editor.style.display = 'none';
-            video.play();
-        };
+            closeNoteEditor();
+            saveToLocalStorage();
+        }
 
         function renderNotes() {
-            const list = document.getElementById('notes-list');
-            list.innerHTML = '';
+            DOM.notesList.innerHTML = '';
             notes.sort((a, b) => a.time - b.time).forEach(note => {
                 const li = document.createElement('li');
                 li.className = 'note-item';
-                const min = Math.floor(note.time / 60);
-                const sec = Math.floor(note.time % 60);
-                const timeStr = `${min}:${sec < 10 ? '0' : ''}${sec}`;
-                
                 li.innerHTML = `
-                    <div class="timestamp" onclick="video.currentTime = ${note.time}; video.play();">
-                        [${timeStr}]
+                    <div class="note-header">
+                        <div class="timestamp" data-time="${note.time}">[${Utils.formatTime(note.time)}]</div>
+                        <div class="note-actions">
+                            <button class="btn-small btn-secondary copy-btn" data-id="${note.id}" title="Copiar texto">📋</button>
+                            <button class="btn-small btn-secondary edit-btn" data-id="${note.id}" title="Editar">✏️</button>
+                            <button class="btn-small btn-danger delete-btn" data-id="${note.id}" title="Excluir">🗑️</button>
+                        </div>
                     </div>
-                    <div>${note.text}</div>
+                    <div class="note-text">${note.text}</div>
                 `;
-                list.appendChild(li);
+                DOM.notesList.appendChild(li);
+            });
+
+            // Delegação de eventos da lista
+            DOM.notesList.querySelectorAll('.timestamp').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    const t = parseFloat(e.target.dataset.time);
+                    if (currentMediaManager) { currentMediaManager.seek(t); currentMediaManager.play(); }
+                });
+            });
+            DOM.notesList.querySelectorAll('.edit-btn').forEach(el => {
+                el.addEventListener('click', (e) => openNoteEditor(null, e.target.closest('button').dataset.id));
+            });
+            DOM.notesList.querySelectorAll('.delete-btn').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if(confirm("Excluir esta nota?")) {
+                        notes = notes.filter(n => n.id !== e.target.closest('button').dataset.id);
+                        renderNotes();
+                        saveToLocalStorage();
+                    }
+                });
+            });
+            DOM.notesList.querySelectorAll('.copy-btn').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    const btn = e.target.closest('button');
+                    const note = notes.find(n => n.id === btn.dataset.id);
+                    if(note) {
+                        navigator.clipboard.writeText(`[${Utils.formatTime(note.time)}] ${note.text}`).then(() => {
+                            const orig = btn.textContent;
+                            btn.textContent = '✅';
+                            setTimeout(() => btn.textContent = orig, 1000);
+                        });
+                    }
+                });
             });
         }
 
-        // Exportar
-        document.getElementById('export-btn').onclick = () => {
-            let md = "# Notas de Vídeo Local\n\n";
-            notes.forEach(n => {
-                const min = Math.floor(n.time / 60);
-                const sec = Math.floor(n.time % 60);
-                md += `- **[${min}:${sec < 10 ? '0' : ''}${sec}]**: ${n.text}\n`;
-            });
-            const blob = new Blob([md], {type: 'text/markdown'});
+        // Atalhos de Teclado
+        document.addEventListener('keydown', (e) => {
+            const isTyping = ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
+            if (e.code === 'Space' && !isTyping) {
+                e.preventDefault();
+                if (currentMediaManager) {
+                    if (currentMediaManager.isPlaying()) DOM.captureBtn.click();
+                    else currentMediaManager.play();
+                }
+            }
+            if (document.activeElement === DOM.noteInput) {
+                if (e.code === 'Enter' && !e.shiftKey) { e.preventDefault(); saveNote(); }
+                if (e.code === 'Escape') closeNoteEditor();
+            }
+        });
+
+        // --- EXPORTAÇÃO E METADADOS ---
+        document.getElementById('export-md-btn').addEventListener('click', () => {
+            if (notes.length === 0) return alert("Nenhuma nota para exportar!");
+            
+            const author = document.getElementById('meta-author').value.trim();
+            const title = document.getElementById('meta-title').value.trim() || 'Sem Título';
+            const year = document.getElementById('meta-year').value.trim() || new Date().getFullYear();
+            const link = mediaUrlMetadata;
+            
+            let md = `# Notas de Mídia\n\n`;
+
+            if (author) {
+                const date = new Date();
+                const months = ['jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.'];
+                const dateStr = `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+                
+                md += `### Referências e Metadados\n`;
+                md += `**ABNT:** ${author.toUpperCase()}. ${title}. ${year}. Disponível em: <${link}>. Acesso em: ${dateStr}\n\n`;
+                md += `**APA:** ${author} (${year}). ${title}. Recuperado de <${link}>\n\n---\n\n`;
+            } else {
+                md += `**Fonte:** ${link}\n**Data:** ${new Date().toLocaleString()}\n\n---\n\n`;
+            }
+
+            notes.forEach(n => { md += `- **[${Utils.formatTime(n.time)}]**: ${n.text}\n`; });
+            downloadBlob(md, 'text/markdown', `Notas-${Date.now()}.md`);
+        });
+
+        document.getElementById('export-json-btn').addEventListener('click', () => {
+            if (notes.length === 0) return alert("Nenhuma nota para exportar!");
+            const data = { 
+                source: mediaUrlMetadata, 
+                date: new Date().toISOString(), 
+                author: document.getElementById('meta-author').value,
+                title: document.getElementById('meta-title').value,
+                year: document.getElementById('meta-year').value,
+                notes: notes 
+            };
+            downloadBlob(JSON.stringify(data, null, 2), 'application/json', `Notas-${Date.now()}.json`);
+        });
+
+        document.getElementById('copy-all-btn').addEventListener('click', (e) => {
+            if (notes.length === 0) return alert("Nenhuma nota para copiar!");
+            let text = `Notas de Mídia\nFonte: ${mediaUrlMetadata}\nData: ${new Date().toLocaleString()}\n\n`;
+            notes.forEach(n => { text += `[${Utils.formatTime(n.time)}] ${n.text}\n`; });
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = e.target;
+                const orig = btn.innerHTML;
+                btn.innerHTML = '✅ Copiado!';
+                setTimeout(() => btn.innerHTML = orig, 2000);
+            }).catch(err => alert("Erro ao copiar: " + err));
+        });
+
+        document.getElementById('import-json').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                try {
+                    const data = JSON.parse(evt.target.result);
+                    if (data.notes && Array.isArray(data.notes)) {
+                        const importedNotes = data.notes.map(n => ({ ...n, id: Utils.generateId() }));
+                        notes = notes.concat(importedNotes);
+                        renderNotes();
+                        saveToLocalStorage();
+                        alert(`${importedNotes.length} notas importadas!`);
+                    }
+                } catch (err) { alert("Erro ao ler JSON inválido."); }
+            };
+            reader.readAsText(file);
+        });
+
+        function downloadBlob(content, type, filename) {
+            const blob = new Blob([content], { type: type });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'minhas-notas.md';
+            a.download = filename;
             a.click();
-        };
+        }
+
+        // --- TRANSCRIÇÃO E MÃOS LIVRES ---
+        DOM.settingsToggle.addEventListener('click', () => { DOM.settingsPanel.classList.toggle('hidden'); });
+
+        DOM.engineSelect.addEventListener('change', (e) => {
+            const val = e.target.value;
+            DOM.voskConfig.classList.add('hidden');
+            if (val === 'none') {
+                DOM.quickMicBtn.classList.add('hidden');
+                DOM.innerMicBtn.classList.add('hidden');
+            } else {
+                DOM.quickMicBtn.classList.remove('hidden');
+                DOM.innerMicBtn.classList.remove('hidden');
+                if (val === 'vosk') DOM.voskConfig.classList.remove('hidden');
+            }
+        });
+
+        function updateMicUI(active) {
+            isTranscribing = active;
+            if (active) {
+                DOM.innerMicBtn.classList.add('mic-active'); DOM.innerMicBtn.textContent = '⏹️';
+                DOM.quickMicBtn.classList.add('mic-active'); DOM.quickMicBtn.textContent = '⏹️';
+            } else {
+                DOM.innerMicBtn.classList.remove('mic-active'); DOM.innerMicBtn.textContent = '🎙️';
+                DOM.quickMicBtn.classList.remove('mic-active'); DOM.quickMicBtn.textContent = '🎙️';
+            }
+        }
+
+        DOM.quickMicBtn.addEventListener('click', async () => {
+            if (!currentMediaManager) return;
+            if (isTranscribing) { stopTranscription(DOM.engineSelect.value); return; }
+            if (currentMediaManager.isPlaying()) currentMediaManager.pause();
+            const time = await getMediaTimeSafe();
+            if (DOM.noteEditor.classList.contains('hidden') || parseFloat(DOM.noteInput.dataset.time) !== time) {
+                openNoteEditor(time);
+            }
+            iniciarTranscricaoCorreta();
+        });
+
+        DOM.innerMicBtn.addEventListener('click', () => {
+            if (isTranscribing) stopTranscription(DOM.engineSelect.value); 
+            else iniciarTranscricaoCorreta();
+        });
+
+        async function iniciarTranscricaoCorreta() {
+            const engine = DOM.engineSelect.value;
+            if (engine === 'webspeech') startWebSpeech();
+            if (engine === 'vosk') await startVosk();
+        }
+
+        function appendTranscription(text) {
+            if (!text.trim()) return;
+            const val = DOM.noteInput.value;
+            DOM.noteInput.value = val ? `${val} ${text}` : text;
+            saveToLocalStorage(); // Salva rascunho
+            
+            // Auto-Save (Mãos Livres)
+            if (DOM.autoSaveToggle.checked) {
+                clearTimeout(autoSaveTimer);
+                autoSaveTimer = setTimeout(async () => {
+                    if (isTranscribing) {
+                        saveNote(); 
+                        const time = await getMediaTimeSafe();
+                        openNoteEditor(time); 
+                    }
+                }, 3000);
+            }
+        }
+
+        let webSpeechRec = null;
+        let voskModel = null;
+        let voskRecognizer = null;
+        let audioContext = null;
+
+        function startWebSpeech() {
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRec) return alert("Seu navegador não suporta Web Speech API.");
+            
+            webSpeechRec = new SpeechRec();
+            webSpeechRec.lang = 'pt-BR';
+            webSpeechRec.continuous = true;
+            webSpeechRec.interimResults = false;
+            
+            webSpeechRec.onstart = () => updateMicUI(true);
+            webSpeechRec.onresult = (event) => appendTranscription(event.results[event.results.length - 1][0].transcript);
+            webSpeechRec.onerror = (e) => stopTranscription('webspeech');
+            webSpeechRec.onend = () => { if (isTranscribing) webSpeechRec.start(); }; 
+            
+            webSpeechRec.start();
+        }
+
+        async function startVosk() {
+            if (!(currentMediaManager instanceof HTML5MediaHandler)) return alert("Vosk requer arquivo local no celular.");
+
+            try {
+                DOM.innerMicBtn.textContent = '⏳'; DOM.quickMicBtn.textContent = '⏳';
+                if (!voskModel) voskModel = await Vosk.createModel(document.getElementById('vosk-model-url').value);
+                if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                voskRecognizer = new voskModel.KaldiRecognizer(audioContext.sampleRate);
+                voskRecognizer.setWords(true);
+
+                const mediaElement = currentMediaManager.getMediaElement();
+                const source = audioContext.createMediaElementSource(mediaElement);
+                const processor = audioContext.createScriptProcessor(4096, 1, 1);
+                
+                source.connect(processor);
+                processor.connect(audioContext.destination);
+
+                processor.onaudioprocess = (e) => {
+                    if (!isTranscribing) return;
+                    if (voskRecognizer.acceptWaveform(e.inputBuffer.getChannelData(0))) {
+                        const result = voskRecognizer.getResult();
+                        if (result.text) appendTranscription(result.text);
+                    }
+                };
+
+                updateMicUI(true);
+                currentMediaManager.play();
+            } catch (err) { alert("Erro Vosk"); updateMicUI(false); }
+        }
+
+        function stopTranscription(engine) {
+            updateMicUI(false);
+            clearTimeout(autoSaveTimer);
+            if (engine === 'webspeech' && webSpeechRec) {
+                webSpeechRec.onend = null;
+                webSpeechRec.stop();
+            }
+        }
+
+        // Tenta carregar sessão automaticamente ao abrir
+        window.addEventListener('DOMContentLoaded', loadState);
+
     </script>
 </body>
 </html>
